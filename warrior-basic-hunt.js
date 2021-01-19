@@ -1,6 +1,7 @@
 // VARS
-const _check_party_target = false;
+const _use_party_target = false;
 const _respawn_on_death = true;
+const _target_fallback_options = { min_xp: 1600, max_att: 120 };
 
 // CODE
 const getRandomTargetFromParty = () => {
@@ -15,11 +16,11 @@ const getRandomTargetFromParty = () => {
 	return partyMemberTarget;
 }
 
-const getEnemyTarget = (fallbackOptions = { min_xp: 1000, max_att: 120 }) => {
+const getEnemyTarget = (fallbackOptions = _target_fallback_options) => {
 	const targeted = get_targeted_monster();
 	if (targeted) return targeted;
 	
-	if (_check_party_target) {
+	if (_use_party_target) {
 		const partyTarget =	getRandomTargetFromParty();
 		if (partyTarget) return partyTarget;
 	}
@@ -27,6 +28,40 @@ const getEnemyTarget = (fallbackOptions = { min_xp: 1000, max_att: 120 }) => {
 	const fallback = get_nearest_monster(fallbackOptions); 
 	if (fallback) return fallback;
 }
+
+const manage_hp_and_mp = () => {
+	if (mssince(new Date(get("last_potion"))) < 600) return;
+	
+	let used = false;
+		
+	if (character.hp < character.max_hp * 0.4) {
+		if (!is_on_cooldown("use_hp")) {
+			log("Drinking HP Potion!");
+			use_skill("use_hp");
+			used = true;
+		}
+	} else if (character.hp < character.max_hp) {
+		if (!is_on_cooldown("regen_hp")) {
+			use_skill("regen_hp");
+			used = true;
+		}
+	}
+	
+	if (character.mp < character.max_mp * 0.5) {
+		if (!is_on_cooldown("use_mp")) {
+			log("Drinking MP Potion!");
+			use_skill('use_mp'); 
+			used = true;
+		}
+	} else if (character.mp < character.max_mp) {
+		if (!is_on_cooldown("regen_mp")) {
+			use_skill("regen_mp");
+			used = true;
+		}
+	}
+	
+	if (used) set("last_potion", new Date().getTime());
+};
 
 setInterval(() => {
 	if (character.rip) {
@@ -37,7 +72,7 @@ setInterval(() => {
 		return;
 	}
 	
-	use_hp_or_mp();
+	manage_hp_and_mp();	
 	loot();
 
 	if(is_moving(character)) return;	
@@ -49,6 +84,7 @@ setInterval(() => {
 			!is_on_cooldown("charge")
 			&& character.mp >= G.skills.charge.mp
 		) {
+			log("Charge!");
 			use_skill("charge");
 		}	
 		
