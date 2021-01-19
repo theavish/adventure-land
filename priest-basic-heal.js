@@ -1,7 +1,8 @@
 // VARS
-const _focus_character = "avitanks";
+const _tank_character = "avitanks";
 const _respawn_on_death = true;
 const _minimum_healing_threshold = 500;
+const _first_target = "bee";
 
 // CODE
 const getNeedsHealingFromParty = () => {
@@ -22,10 +23,26 @@ const getNeedsHealingFromParty = () => {
 	return needsHealing.sort((a, b) => (a.hp / a.max_hp) - (b.hp / b.max_hp));
 };
 
+let waitingForPartner = true;
+
 setInterval(() => {
 	if (character.rip) {
+		waitingOnDeath = true;
+		
 		if (_respawn_on_death) {
 			respawn();
+			
+			while (waitingForPartner) {
+				const partner = get_player(_tank_character);
+				const inRange = is_in_range(partner);
+
+				if (inRange) {
+					log(`${partner.name} is here, let's go.`);
+					smart_move(_first_target.x, _first_target.y);
+					waitingForPartner = false;
+					break;
+				}
+			}
 		}
 		
 		return;
@@ -36,16 +53,21 @@ setInterval(() => {
 
 	if (is_moving(character)) return;
 	
-	const focus = get_player(_focus_character);
-	if (!is_moving(character) && !get_target() && !is_in_range(focus)) {
-		smart_move(focus)
+	const tank = get_player(_tank_character);
+	if (
+		!is_moving(character) 
+		&& !get_target() 
+		&& tank 
+		&& parent.distance(character, tank) > 300
+	) {
+		log("We got lost, meeting back up at first target.");
+		smart_move(_first_target.x, _first_target.y);
 	}
 	
 	const needsHealing = getNeedsHealingFromParty();
 	
 	if (needsHealing.length === 0) {
-		set_message("Attacking");
-		const tank = get_player(_focus_character);
+		const tank = get_player(_tank_character);
 		if (!tank) return;
 				
 		const tankTarget = get_target_of(tank);
