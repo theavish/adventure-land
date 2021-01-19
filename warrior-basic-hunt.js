@@ -1,7 +1,8 @@
 // VARS
 const _use_party_target = false;
 const _respawn_on_death = true;
-const _target_fallback_options = { min_xp: 1600, max_att: 120 };
+const _target_fallback_options = { min_xp: 960, max_att: 120 };
+const _first_target = "snake";
 
 // CODE
 const getRandomTargetFromParty = () => {
@@ -33,6 +34,7 @@ setInterval(() => {
 	if (character.rip) {
 		if (_respawn_on_death) {
 			respawn();
+			smart_move(_first_target);
 		}
 		
 		return;
