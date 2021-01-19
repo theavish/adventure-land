@@ -16,7 +16,7 @@ const getRandomTargetFromParty = () => {
 	return partyMemberTarget;
 }
 
-const getEnemyTarget = (fallbackOptions = _target_fallback_options) => {
+const getEnemyTarget = () => {
 	const targeted = get_targeted_monster();
 	if (targeted) return targeted;
 	
@@ -25,7 +25,7 @@ const getEnemyTarget = (fallbackOptions = _target_fallback_options) => {
 		if (partyTarget) return partyTarget;
 	}
 	
-	const fallback = get_nearest_monster(fallbackOptions); 
+	const fallback = get_nearest_monster(_target_fallback_options); 
 	if (fallback) return fallback;
 }
 
