@@ -36,27 +36,33 @@ setInterval(() => {
 
 	if (is_moving(character)) return;
 	
+	const focus = get_player(_focus_character);
+	if (!is_moving(character) && !get_target() && !is_in_range(focus)) {
+		smart_move(focus)
+	}
+	
 	const needsHealing = getNeedsHealingFromParty();
 	
 	if (needsHealing.length === 0) {
+		set_message("Attacking");
 		const tank = get_player(_focus_character);
 		if (!tank) return;
 				
 		const tankTarget = get_target_of(tank);
 		if (!tankTarget || !is_monster(tankTarget)) {
-			const inRange = parent.distance(character, tank) > 100;
+			const inRange = parent.distance(character, tank) < 100;
 			if (!inRange) {
 				xmove(
-					character.x + (tank.x - character.x) / 2,
-					character.y + (tank.y - character.y) / 2
+					character.x + (tank.going_x - character.x) / 2,
+					character.y + (tank.going_y - character.y) / 2
 				);
 			}
 		} else {
 			const inRange = is_in_range(tankTarget);
 			if (!inRange) {
 				xmove(
-					character.x + (tankTarget.x - character.x) / 2,
-					character.y + (tankTarget.y - character.y) / 2
+					character.x + (tankTarget.going_x - character.x) / 2,
+					character.y + (tankTarget.going_y - character.y) / 2
 				);
 			}
 
@@ -66,20 +72,26 @@ setInterval(() => {
 			}
 		}
 	} else {
-		log(needsHealing.map(n => n.name))
-		const ally = needsHealing[0];
-		const inRange = is_in_range(ally, G.skills.heal);
-		if (!inRange) {
-			xmove(
-				character.x + (ally.x - character.x) / 2,
-				character.y + (ally.y - character.y) / 2
-			);
+		set_message("Healing");
+		if (needsHealing.length === 1 || is_on_cooldown("pheal")) {
+			const ally = needsHealing[0];
+			const inRange = is_in_range(ally, G.skills.heal);
+			if (!inRange) {
+				xmove(
+					character.x + (ally.going_x - character.x) / 2,
+					character.y + (ally.going_y - character.y) / 2
+				);
+			}
+			
+			if (inRange && can_heal(ally)) {
+				log(`Healing ${ally.name}`);
+				heal(ally);
+			}
+		} else {
+			log(`Healing the party`);
+			if (!is_on_cooldown("pheal")) use_skill("pheal");
 		}
 
-		if (inRange && can_heal(ally)) {
-			log(`Healing ${ally.name}`);
-			set_message("Healing");
-			heal(ally);
-		}
+		
 	}
 }, 1000 / 4);
