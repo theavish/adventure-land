@@ -34,7 +34,7 @@ setInterval(() => {
 			
 			while (waitingForPartner) {
 				const partner = get_player(_tank_character);
-				const inRange = is_in_range(partner);
+				const inRange = parent.distance(character, partner) < 300;
 
 				if (inRange) {
 					log(`${partner.name} is here, let's go.`);
