@@ -1,8 +1,9 @@
 // VARS
+const _healer_character = "aviheals";
 const _use_party_target = false;
 const _respawn_on_death = true;
-const _target_fallback_options = { min_xp: 960, max_att: 120 };
-const _first_target = "snake";
+const _target_fallback_options = { min_xp: 400, max_att: 120 };
+const _first_target = { x: 613, y: 748 };
 
 // CODE
 const getRandomTargetFromParty = () => {
@@ -30,20 +31,44 @@ const getEnemyTarget = () => {
 	if (fallback) return fallback;
 }
 
+let waitingForPartner = true;
+
 setInterval(() => {
 	if (character.rip) {
 		if (_respawn_on_death) {
 			respawn();
-			smart_move(_first_target);
+			
+			while (waitingForPartner) {
+				const partner = get_player(_healer_character);
+				const inRange = is_in_range(partner);
+
+				if (inRange) {
+					log(`${partner.name} is here, let's go.`);
+					smart_move(_first_target.x, _first_target.y);
+					waitingForPartner = false;
+					break;
+				}
+			}
 		}
 		
 		return;
-	}
+	}	
 	
 	use_hp_or_mp();	
 	loot();
 
-	if(is_moving(character)) return;	
+	if(is_moving(character)) return;
+	
+	const healer = get_player(_healer_character);
+	if (
+		!is_moving(character) 
+		&& !get_target() 
+		&& healer 
+		&& parent.distance(character, healer) > 300
+	) {
+		log("We got lost, meeting back up at first target.");
+		smart_move(_first_target.x, _first_target.y);
+	}
 
 	const target = getEnemyTarget();
 	
