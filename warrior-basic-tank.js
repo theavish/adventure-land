@@ -35,6 +35,8 @@ let waitingForPartner = true;
 
 setInterval(() => {
 	if (character.rip) {
+		waitingForPartner = true;
+		
 		if (_respawn_on_death) {
 			respawn();
 			
