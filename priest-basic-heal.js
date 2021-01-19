@@ -1,25 +1,26 @@
 // VARS
 const _focus_character = "avitanks";
 const _respawn_on_death = true;
-const _minimum_healing_threshold = character.attack * 2;
+const _minimum_healing_threshold = 500;
 
 // CODE
-const getNeedsHealingFromParty =
-	(healingThreshold = _minimum_healing_threshold) => {
-		const needsHealing = [];
+const getNeedsHealingFromParty = () => {
+	const needsHealing = [];
 
-		for (const name in get_party()) {
-			const ally = get_player(name);
-			if (!ally) continue;
+	for (const name in get_party()) {
+		const ally = get_player(name);
+		if (!ally) continue;
 
-			const missingLife = ally.max_hp - ally.hp;
-			if (missingLife < healingThreshold) continue;
-
-			needsHealing.push(ally);
+		const missingLife = ally.max_hp - ally.hp;
+		if (missingLife < _minimum_healing_threshold) {
+			continue;
 		}
 
-		return needsHealing;
-	};
+		needsHealing.push(ally);
+	}
+
+	return needsHealing.sort((a, b) => (a.hp / a.max_hp) - (b.hp / b.max_hp));
+};
 
 setInterval(() => {
 	if (character.rip) {
@@ -65,20 +66,20 @@ setInterval(() => {
 			}
 		}
 	} else {
-		needsHealing.forEach((ally) => {
-			const inRange = is_in_range(ally, G.skills.heal);
-			if (!inRange) {
-				xmove(
-					character.x + (ally.x - character.x) / 2,
-					character.y + (ally.y - character.y) / 2
-				);
-			}
-			
-			if (inRange && can_heal(ally)) {
-				log(`Healing ${ally.name}`);
-				set_message("Healing");
-				heal(ally);
-			}
-		});
+		log(needsHealing.map(n => n.name))
+		const ally = needsHealing[0];
+		const inRange = is_in_range(ally, G.skills.heal);
+		if (!inRange) {
+			xmove(
+				character.x + (ally.x - character.x) / 2,
+				character.y + (ally.y - character.y) / 2
+			);
+		}
+
+		if (inRange && can_heal(ally)) {
+			log(`Healing ${ally.name}`);
+			set_message("Healing");
+			heal(ally);
+		}
 	}
 }, 1000 / 4);
